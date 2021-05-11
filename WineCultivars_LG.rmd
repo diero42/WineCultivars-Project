@@ -1,8 +1,11 @@
 ---
-title: "Wine Cultivar, Alcohol, and Ash Analysis"
+title: "Wine Cultivar Flavor Profile Analysis"
 author: "Loren Grooms"
-date: "01/07/2020"
-output: pdf_document
+date: "05/04/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -18,84 +21,182 @@ library(caret)
 library(data.table)
 library(class)
 library(gmodels)
+```
 
-#Download wine dataset from UCI website
+# Introduction
+
+Wine is a commodity that has been produced and enjoyed by humans across the globe for thousands of years. It has proven to be far more than a simple inebriant and is regularly employed in culinary, health, and religious contexts. A number of constituents play into the flavor profile of wine, from magnesium levels to protein content and beyond. Using data provided by UCI, this project aims to analyze these variables in wines made from three Italian grape varietals grown in the same region. Our ultimate goal will be to help a consumer predict the levels of several influencing variables in these wines based on one main factor: alcohol content (AC). This was chosen because AC is almost always printed on the wine's label and is visible to the consumer. Looking at each constituent individually, we will use AC to identify several strong predictors of each grape varietal. Then we will form a predictive model to visualize the potential levels of each constituent predicted by its AC. Finally, we will combine the results to form a simplified table of the relevant constituents for consumer reference. \newpage
+
+# Method
+
+## 1 - Data Inspection & Cleaning
+
+We will begin our analysis by locating the [Wine Data Set](https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data) on the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/wine). The website identifies this data as chemical analysis results from 178 wines made with 3 grape varietals, providing quantities of the following constituents:
+
+**1)** Alcohol \newline
+**2)** Malic acid \newline
+**3)** Ash \newline
+**4)** Alcalinity of ash \newline
+**5)** Magnesium \newline
+**6)** Total phenols \newline
+**7)** Flavonoids \newline
+**8)** Nonflavonoid phenols \newline
+**9)** Proanthocyanins \newline
+**10)** Color intensity \newline
+**11)** Hue \newline
+**12)** OD280/OD315 of diluted wines (Protein Concentration) \newline
+**13)** Proline
+
+We'll now download the dataset using R then extract, clean, and label the data. \newline
+
+```{r Exploration}
+# Download wine dataset from UCI website.
 url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data"
+# url <- "https://raw.githubusercontent.com/diero42/WineCultivars-Project/main/wine.data"
 
-#Read the table into a list, flatten the list, convert data to characters, and split each row along the commas
+# Read the table into a list, flatten the list, convert data to characters, and
+# split each row along the commas.
 wine <- strsplit(as.character(unlist(read.table(url))),split=",")
 
-#Create a dataframe with the names of each column from the data source website
-#Insert zeroes as placeholders
-wineDat <- data.frame("Grape" = 0, "Alcohol" = 0, "Ash" = 0, "AlcalinityOfAsh" = 0, "Magnesium" = 0, "TotalPhenols" = 0, "Flavanoids" = 0, "NonflavanoidPhenols" = 0, "Proanthocyanins" = 0, "ColorIntensity" = 0, "Hue" = 0, "ProteinConcentration" = 0, "Proline" = 0)
+# Create a dataframe with the names of each column from the data source website.
+# Insert zeroes as placeholders.
+wineDat <- data.frame("Grape" = 0, "Alcohol" = 0, "MalicAcid" = 0, "Ash" = 0,
+                      "AlcalinityOfAsh" = 0, "Magnesium" = 0, "TotalPhenols" = 0,
+                      "Flavonoids" = 0, "NonflavonoidPhenols" = 0, "Proanthocyanins" = 0,
+                      "ColorIntensity" = 0, "Hue" = 0, "ProteinConcentration" = 0,
+                      "Proline" = 0)
 
-#Insert each row of the list into the dataframe
+# Insert each row of the list into the dataframe.
 for(i in 1:length(wine)){
     wineDat <- rbind(wineDat,wine[[i]])
 }
 
-#Remove the row of zeroes
-#Remove the unused columns
-#Renumber the rows
-#Convert all values to numeric using sapply
+# Remove the row of zeroes.
+# Renumber the rows.
+# Convert all values to numeric using sapply.
 wineDat <- wineDat[-1,]
-wineDat <- wineDat[,-c(4:14)]
 row.names(wineDat) <- 1:nrow(wineDat)
 wineDat <- as.data.frame(sapply(wineDat, as.numeric))
+```
+\newpage
 
-#Set a standard normalization function gotten from the internet
+```{r Inspect, echo=FALSE}
+head(wineDat)
+```
+
+## \newline
+##
+
+```{r Inspect2,echo=FALSE}
+cat("Rows: ",nrow(wineDat))
+cat("Columns: ",ncol(wineDat))
+```
+
+Our data is now readable and easily usable within R. \newpage
+
+## 2 - Data Preparation
+
+We will be using the **k-nearest neighbors (kNN) algorithm** to explore our data further, so we must **normalize** the data so it is usable in the algorithm. We will normalize our data using the following equation:
+
+$$N_{norm} = \frac{n - n_{min}}{n_{max}-n_{min}}$$
+
+We will then separate our data into several sets:
+
+**Test** - Used within the algorithm to test the effectiveness of its components. \newline
+**Training** - Our core data, used as the input to our kNN algorithm. \newline
+**True Classifications (CL)** - The set of true values corresponding to the algorithm's predictions.
+
+We want our Test set to be a reasonable fraction of the greater dataset so we can use it to confirm our results reliably without removing too much of the core training data. Beyond that, this is somewhat of an arbitrary decision so we will be making our Test set 33% of the overall data and Training 66%. The algorithm will use the CL to validate the final results.\newline
+
+```{r SetSeed,echo=FALSE}
+set.seed(4)
+```
+```{r Prep}
+
+# Set a standard normalization function.
 norm <- function(x){
     (x -min(x))/(max(x)-min(x))
 }
 
-#Normalize the data by applying the norm function to all columns
-normWine <- as.data.frame(lapply(wineDat[,1:3], norm))
+# Normalize the data by applying the norm function to all columns.
+normWine <- as.data.frame(lapply(wineDat[,2:14], norm))
 
-#66% and 33% have been selected as the respective sizes of the training and test sets. This is an arbitrary decision influenced by observed custom
-#Calculate 66% of the normalized data entries
-#Sample the normalized data to select a test index
-#Divide normalized data along test index
+# 66% and 33% have been selected as the respective sizes of the training and
+# test sets.
+# This is an arbitrary decision influenced by observed custom.
+# Calculate 66% of the normalized data entries.
+# Sample the normalized data to select a test index.
+# Divide normalized data along test index.
 train_size <- floor(0.66 * nrow(normWine))
 test_index <- sample(seq_len(nrow(normWine)), size = train_size)
 train_set <- normWine[test_index,]
 test_set <- normWine[-test_index,]
 
-#Isolate the column of the value to be predicted (grape cultivar)
+# Isolate the column of the value to be predicted (grape cultivar).
 trainGrape <- wineDat[test_index,1]
 testGrape <- wineDat[-test_index,1]
-
-#Apply the knn function from the class package to the train and test sets in order to predict the grape type
-#13 regions will be generated as this is roughly the square root of the total number of observations (178)
-kWine <- knn(train=train_set,test=test_set,cl=trainGrape,k=13)
 ```
-
-## Introduction
-
-Wine is a beverage produced and enjoyed by humans across the globe for thousands of years. A number of factors play into the taste and quality of wine, from magnesium levels to protein content. This project aims to analyze the relationship between the alcohol and ash content of Italian wine made from three different grapes. First, we will see if alcohol and ash content are accurate predictors for grape variety using K Nearest Neighbors analysis. Then, we will use logistic regression to visualize this relationship per grape variety.
-
-## Method
-
-This analysis begins by checking for and installing any missing packages onto the user's system. Next, the data file is downloaded from UCI's online data repository and cleaned by removing delimiters, creating a dataframe, eliminating unused columns, and converting all datatypes to numeric. Before using our kNN analysis, we must normalize the data using a standard normalization function. After applying this to the entire frame, we set 66% of the data as our training set and the remaining 33% as the test set. We then separate our prediction target (type of grape) into separate training and test variables. Next, we apply the kNN function from the "class" package to form groups of predicted values. These groups indicate regions of data with similar attributes which are predicted to contain the same grape type. Finally, we will use a validation table from the "gmodels" package to calculate the accuracy of these predictions, and then graph a logistical model to visualize the relationship between alcohol and ash content per grape.
 
 \newpage
 
-## Results
+## 3 - Data Exploration
 
-```{r table, echo=FALSE, fig.align="center"}
-CrossTable(x=testGrape,y=kWine,prop.chisq = FALSE)
+We can now explore our dataset by running our kNN analysis with our normalized data. We are attempting to identify the constituents in our wine that correlate most strongly with grape varietal and alcohol content. To accomplish this, we will be running this algorithm 12 separate times, each time pairing AC with one other constituent. The algorithm will attempt to use the levels of these two variables to predict which grape varietal was used to make the wine, and will then return the accuracy of each pair's prediction. \newline
 
+```{r kNN}
+
+# Apply the knn function from the class package to the train and test sets
+# in order to predict the grape type.
+# 13 regions will be generated as this is roughly the square root of the
+# total number of observations (178).
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+kResults <- " Accuracy:\n"
+for (x in 2:13){
+    kWine <- knn(train=train_set[,c(1,x)],test=test_set[,c(1,x)],cl=trainGrape,k=13)
+    tab <- table(kWine,testGrape)
+    kResults <- c(kResults,paste(names(train_set)[x],"=",accuracy(tab),"%\n"))
+}
 ```
 
-The observations from this table tell us that the kNN method of analysis accurately predicted 61 out of 61 grape cultivars using the alcohol and ash content of the wine in question. This indicates that these wine elements vary significantly according to the grape types used in their creation. We can now run a logistic analysis to see how alcohol content relates to ash content in each grape cultivar.
+```{r Accuracy, echo=FALSE}
+cat(kResults)
+```
+
+## 4 - Data Interpretation
+
+Our results look excellent. We can see that, when paired with AC, our constituents all correlate with grape varietal to varying degrees, but there are some that stand out with especially high accuracies. Looking at our four top performers, this analysis tells us that these constituents are the most distinct between the varietals in question, but not much beyond that. Since our end goal is to give the consumer simple, helpful information about the constituents in their wine, we will form a linear model to visualize the relationship between AC and the other constituents.
 
 \newpage
 
-```{r graph, echo=FALSE, fig.align="center"}
-wineDat %>% ggplot(aes(Ash,Alcohol,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape")
+## 5 - Data Visualization
+
+In order to extract useful, accurate information about our top four constituents using AC, we will graph a **generalized linear model** for each one which uses AC to predict its levels.
+
+```{r graph1, echo=FALSE, message=FALSE, out.width="90%"}
+wineDat %>% ggplot(aes(Alcohol,Flavonoids,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Flavonoids (g/L)", x="Alcohol (% ABV)")
+```
+```{r graph2, echo=FALSE, message=FALSE, out.width="90%"}
+wineDat %>% ggplot(aes(Alcohol,ProteinConcentration,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Protein Concentration (g/L)", x="Alcohol (% ABV)")
+```
+```{r graph3, echo=FALSE, message=FALSE, out.width="90%"}
+wineDat %>% ggplot(aes(Alcohol,ColorIntensity,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Color Intensity (Chroma)", x="Alcohol (% ABV)")
+```
+```{r graph4, echo=FALSE, message=FALSE, out.width="90%"}
+wineDat %>% ggplot(aes(Alcohol,Hue,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Hue (°)", x="Alcohol (% ABV)")
 ```
 
-This graph breaks down each grape type and how each affects its wine. Grape 1 leads to a higher alcohol, low ash wine with a slight negative correlation between the two. Grape 2, while producing a lower alcohol/higher ash wine than grape 1, displays a similar negative relationship. Grape 3, however, leads to varied alcohol content and high ash, and a more significant positive correlation as well.
+\newpage
 
-## Conclusion
+# Results & Application
 
-Using several analysis methods we have successfully utilized the alcohol and ash content of wine to predict its constituent grape. This analysis could be expanded to the other variables in the original dataset to find similar trends.
+Our final graphs show us the levels of our top four constituents as predicted by alcohol content. This readable information allows the consumer to locate a bottle of wine made with the correct type of grape, look at its alcohol content, and be able to know the likely levels of each of these constituents inside. This helps everyday people who are not connoisseurs or sommeliers engage more deeply with their wine and start to put names to the common flavors they experience in their favorite bottles.
+
+# Further Refinement
+
+x
+
+\newpage
+
+# Conclusion
+
+x
