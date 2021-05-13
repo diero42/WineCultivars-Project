@@ -217,4 +217,4 @@ We could also take more on-the-bottle predictors into account, such as the vinta
 
 # Conclusion
 
-x
+Starting from raw data, we have identified, categorized, and analyzed many constituents of over 150 wines resulting in an applicable, informative method to help consumers hold their own in a potentially intimidating and elitist space. With improvement and iteration, as well as participation from wineries and laboratories to provide high-quality data, such methods could be easily implemented by vintners or independent entities to lower the barriers of entry and make this rewarding hobby more accessible.
