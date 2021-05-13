@@ -6,6 +6,7 @@ output:
   pdf_document: default
   html_document:
     df_print: paged
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -187,11 +188,30 @@ wineDat %>% ggplot(aes(Alcohol,Hue,color=as.factor(Grape))) + geom_point() + geo
 
 # Results & Application
 
-Our final graphs show us the levels of our top four constituents as predicted by alcohol content. This readable information allows the consumer to locate a bottle of wine made with the correct type of grape, look at its alcohol content, and be able to know the likely levels of each of these constituents inside. This helps everyday people who are not connoisseurs or sommeliers engage more deeply with their wine and start to put names to the common flavors they experience in their favorite bottles.
+Our final graphs show us the levels of our top four constituents as predicted by alcohol content. This readable information allows the consumer to locate a bottle of wine made with one of these types of grape, look at its alcohol content, and be able to know the likely levels of each of these constituents inside. This helps everyday people who are not connoisseurs or sommeliers engage more deeply with their wine and start to put names to the common flavors they experience in their favorite bottles.
+
+The graphs may be sufficient for dispersal to the consumer as-is, or we can attempt to improve readability with something like the following table: \newline
+
+```{r Table, echo=FALSE}
+newList <- c('Alcohol Content (% ABV)','Flavonoids (g/L)','Protein Concentration (g/L)',
+             'Color Intensity (Chroma)','Hue (°)',12.8,2.7,3.2,4.5,1.1,'+',
+             '+','x','+','x',14.8,3.3,3.2,6.5,1.1)
+newArray <- array(newList,dim=c(5,4,1))
+newFrame <- as.data.frame(newArray)
+reName <- newFrame[,-1]
+rownames(reName) <- newFrame[,1]
+colnames(reName) <- c("Low AC","- Increases?","- High AC")
+cat("Grape 1")
+reName
+```
 
 # Further Refinement
 
-x
+While our results are very promising, there are still many things that need improvement. \newline
+Most significantly, we do not know what types of grapes these are as this data is anonymous. The method we developed here would need to be applied to wines from a known grape varietal and/or region in order to have actionable data. \newline
+When applying this method elsewhere, our sample size should be much larger. Our core data consisted of 178 observations which, while decent, is not large enough to be a reliable reflection of the overall trends for these grapes. \newline
+If sufficient data quality were attained, we could improve this method further by broadening the scope of our analysis. Looking back to the UCI repository webpage, the author mentions that around 17 variables from the original set were not included. If we increased the amount of constituents observed by finding supplemental or more complete data, we would increase the quality and utility of our final results. \newline
+We could also take more on-the-bottle predictors into account, such as the vintage and winery. Enhancing our GLM function this way would increase our accuracy and allow the consumer even more control and understanding about how years, regions, and weather affect their favorite wines.
 
 \newpage
 
