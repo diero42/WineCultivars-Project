@@ -46,6 +46,7 @@ head(wineDat)
 cat("Rows: ",nrow(wineDat))
 cat("Columns: ",ncol(wineDat))
 
+# Set random seed so results are uniform.
 set.seed(4)
 
 # Set a standard normalization function.
@@ -71,11 +72,13 @@ test_set <- normWine[-test_index,]
 trainGrape <- wineDat[test_index,1]
 testGrape <- wineDat[-test_index,1]
 
-# Apply the knn function from the class package to the train and test sets
-# in order to predict the grape type.
+# Set function to determine accuracy of each prediction.
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
+
+# Apply the knn function from the class package to the column of each constituent
+# in the train and test sets in order to predict the grape type.
 # 13 regions will be generated as this is roughly the square root of the
 # total number of observations (178).
-accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
 kResults <- " Accuracy:\n"
 for (x in 2:13){
   kWine <- knn(train=train_set[,c(1,x)],test=test_set[,c(1,x)],cl=trainGrape,k=13)
@@ -85,6 +88,7 @@ for (x in 2:13){
 
 cat(kResults)
 
+# Graphing AC vs each constituent, with a GLM slope predicting constituent from AC (y ~ x).
 wineDat %>% ggplot(aes(Alcohol,Flavonoids,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Flavonoids (g/L)", x="Alcohol (% ABV)")
 
 wineDat %>% ggplot(aes(Alcohol,ProteinConcentration,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Protein Concentration (g/L)", x="Alcohol (% ABV)")
@@ -92,3 +96,15 @@ wineDat %>% ggplot(aes(Alcohol,ProteinConcentration,color=as.factor(Grape))) + g
 wineDat %>% ggplot(aes(Alcohol,ColorIntensity,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Color Intensity (Chroma)", x="Alcohol (% ABV)")
 
 wineDat %>% ggplot(aes(Alcohol,Hue,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Hue (°)", x="Alcohol (% ABV)")
+
+# Manually creating a list of our results, then converting to a more readable format.
+newList <- c('Alcohol Content (% ABV)','Flavonoids (g/L)','Protein Concentration (g/L)',
+             'Color Intensity (Chroma)','Hue (°)',12.8,2.7,3.2,4.5,1.1,'+',
+             '+','x','+','x',14.8,3.3,3.2,6.5,1.1)
+newArray <- array(newList,dim=c(5,4,1))
+newFrame <- as.data.frame(newArray)
+reName <- newFrame[,-1]
+rownames(reName) <- newFrame[,1]
+colnames(reName) <- c("Low AC","- Increases?","- High AC")
+cat("Grape 1")
+reName

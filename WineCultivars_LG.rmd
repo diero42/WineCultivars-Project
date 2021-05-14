@@ -108,6 +108,7 @@ We will then separate our data into several sets:
 We want our Test set to be a reasonable fraction of the greater dataset so we can use it to confirm our results reliably without removing too much of the core training data. Beyond that, this is somewhat of an arbitrary decision so we will be making our Test set 33% of the overall data and Training 66%. The algorithm will use the CL to validate the final results.\newline
 
 ```{r SetSeed,echo=FALSE}
+# Set random seed so results are uniform.
 set.seed(4)
 ```
 ```{r Prep}
@@ -143,12 +144,13 @@ testGrape <- wineDat[-test_index,1]
 We can now explore our dataset by running our kNN analysis with our normalized data. We are attempting to identify the constituents in our wine that correlate most strongly with grape varietal and alcohol content. To accomplish this, we will be running this algorithm 12 separate times, each time pairing AC with one other constituent. The algorithm will attempt to use the levels of these two variables to predict which grape varietal was used to make the wine, and will then return the accuracy of each pair's prediction. \newline
 
 ```{r kNN}
+# Set function to determine accuracy of each prediction.
+accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
 
-# Apply the knn function from the class package to the train and test sets
-# in order to predict the grape type.
+# Apply the knn function from the class package to the column of each constituent
+# in the train and test sets in order to predict the grape type.
 # 13 regions will be generated as this is roughly the square root of the
 # total number of observations (178).
-accuracy <- function(x){sum(diag(x)/(sum(rowSums(x)))) * 100}
 kResults <- " Accuracy:\n"
 for (x in 2:13){
     kWine <- knn(train=train_set[,c(1,x)],test=test_set[,c(1,x)],cl=trainGrape,k=13)
@@ -172,6 +174,7 @@ Our results look excellent. We can see that, when paired with AC, our constituen
 In order to extract useful, accurate information about our top four constituents using AC, we will graph a **generalized linear model** for each one which uses AC to predict its levels.
 
 ```{r graph1, echo=FALSE, message=FALSE, out.width="90%"}
+# Graphing AC vs each constituent, with a GLM slope predicting constituent from AC (y ~ x).
 wineDat %>% ggplot(aes(Alcohol,Flavonoids,color=as.factor(Grape))) + geom_point() + geom_smooth(method = glm) + labs(color="Grape", y="Flavonoids (g/L)", x="Alcohol (% ABV)")
 ```
 ```{r graph2, echo=FALSE, message=FALSE, out.width="90%"}
@@ -193,6 +196,7 @@ Our final graphs show us the levels of our top four constituents as predicted by
 The graphs may be sufficient for dispersal to the consumer as-is, or we can attempt to improve readability with something like the following table: \newline
 
 ```{r Table, echo=FALSE}
+# Manually creating a list of our results, then converting to a more readable format.
 newList <- c('Alcohol Content (% ABV)','Flavonoids (g/L)','Protein Concentration (g/L)',
              'Color Intensity (Chroma)','Hue (°)',12.8,2.7,3.2,4.5,1.1,'+',
              '+','x','+','x',14.8,3.3,3.2,6.5,1.1)
