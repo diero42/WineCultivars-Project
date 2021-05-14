@@ -1,6 +1,6 @@
 # title: "Wine Cultivar Flavor Profile Analysis"
 # author: "Loren Grooms"
-# date: "05/04/2021"
+# date: "05/14/2021"
 
 knitr::opts_chunk$set(echo = TRUE)
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
@@ -99,12 +99,12 @@ wineDat %>% ggplot(aes(Alcohol,Hue,color=as.factor(Grape))) + geom_point() + geo
 
 # Manually creating a list of our results, then converting to a more readable format.
 newList <- c('Alcohol Content (% ABV)','Flavonoids (g/L)','Protein Concentration (g/L)',
-             'Color Intensity (Chroma)','Hue (°)',12.8,2.7,3.2,4.5,1.1,'+',
-             '+','x','+','x',14.8,3.3,3.2,6.5,1.1)
+             'Color Intensity (Chroma)','Hue (°)',12.8,2.7,3.2,4.5,1.1,'^',
+             '^','-','^','-',14.8,3.3,3.2,6.5,1.1)
 newArray <- array(newList,dim=c(5,4,1))
 newFrame <- as.data.frame(newArray)
 reName <- newFrame[,-1]
 rownames(reName) <- newFrame[,1]
-colnames(reName) <- c("Low AC","- Increases?","- High AC")
+colnames(reName) <- c("Low AC"," - ","High AC")
 cat("Grape 1")
 reName
