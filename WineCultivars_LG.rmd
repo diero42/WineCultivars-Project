@@ -1,7 +1,7 @@
 ---
 title: "Wine Cultivar Flavor Profile Analysis"
 author: "Loren Grooms"
-date: "05/14/2021"
+date: "05/18/2021"
 output:
   pdf_document: default
   html_document:
@@ -24,7 +24,7 @@ library(class)
 
 # Introduction
 
-Wine is a commodity that has been produced and enjoyed by humans across the globe for thousands of years. It has proven to be far more than a simple inebriant and is regularly employed in culinary, health, and religious contexts. A number of constituents play into the flavor profile of wine, from magnesium levels to protein content and beyond. Using data provided by UCI, this project aims to analyze these variables in wines made from three Italian grape varietals grown in the same region. Our ultimate goal will be to help a consumer predict the levels of several influencing variables in these wines based on one main factor: alcohol content (AC). This was chosen because AC is almost always printed on the wine's label and is visible to the consumer. Looking at each constituent individually, we will use AC to identify several strong predictors of each grape varietal. Then we will form a predictive model to visualize the potential levels of each constituent predicted by its AC. Finally, we will combine the results to form a simplified table of the relevant constituents for consumer reference. \newpage
+Wine is a commodity that has been produced and enjoyed across the globe for thousands of years. It has proven to be far more than a simple inebriant and is regularly employed in culinary, health, and religious contexts. A number of constituents play into the flavor profile of wine, from magnesium levels to protein content and beyond. Using data provided by UCI, this project aims to analyze these variables in wines made from three Italian grape varietals grown in the same region. Our ultimate goal will be to help a consumer predict the levels of several influencing variables in these wines based on one main factor: alcohol content (AC). This was chosen because AC is almost always printed on the wine's label and is visible to the consumer. Looking at each constituent individually, we will use AC to identify several strong predictors of each grape varietal. Then we will form a predictive model to visualize the potential levels of each constituent predicted by its AC. Finally, we will combine the results to form a simplified table of the relevant constituents for consumer reference. \newpage
 
 # Method
 

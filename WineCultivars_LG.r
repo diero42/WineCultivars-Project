@@ -1,6 +1,6 @@
 # title: "Wine Cultivar Flavor Profile Analysis"
 # author: "Loren Grooms"
-# date: "05/14/2021"
+# date: "05/18/2021"
 
 knitr::opts_chunk$set(echo = TRUE)
 if(!require(tidyverse)) install.packages("tidyverse", repos = "http://cran.us.r-project.org")
